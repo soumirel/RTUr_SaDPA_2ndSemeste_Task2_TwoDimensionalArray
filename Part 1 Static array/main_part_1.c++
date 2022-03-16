@@ -1,51 +1,114 @@
 #include <iostream>
 #include <locale.h>
 #include <stdlib.h>
-#include <time.h>
-
+#include <ctime>
+#include <iomanip>
 
 using namespace std;
-const int maxRows = 1000;
-const int maxColumns = 1000;
+const int maxRows = 100;
+const int maxColumns = 100;
+
+void arrFillingHub(double arr[][maxColumns], int* rows, int* columns, bool* filledSignal, int arrNumber);
+
+int correctInputSizes();
+
+void fillArray(double array[][maxColumns], int rows, int columns, int generateType);
+
+double getRandomNumber();
+
+void randomFilling(double array[][maxColumns], int rows, int columns);
+
+void keyboardFilling(double array[][maxColumns], int rows, int columns);
+
+void printArrays(double a1[][maxColumns],
+	double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, bool f1, bool f2, bool f3);
+void printMenu(double a1[][maxColumns],
+	double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, bool f1, bool f2, bool f3);
+
+double findSolution(double a1[][maxColumns], double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, bool f1, bool f2, bool f3, double sA[][maxColumns], int* rS, int* cS);
+
+void printSpecialArr(double a1[][maxColumns], double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, double sA[][maxColumns], int* rS, int* cS, bool f1, bool f2, bool f3);
+
+void sumOfArrs(double a1[][maxColumns], double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, double sA[][maxColumns], int* rows, int* cols);
+
+double findMaxNumInArrRow(double array[][maxColumns], int columns, int rowNumber);
+
+double findD(double array[][maxColumns], int rows, int cols);
 
 
 int main() {
+	srand(time(0));
 	setlocale(LC_ALL, "Russian");
 	// Главные переменные
-	double arrayA[maxRows][maxColumns]{};
-	int aRows, aCols;
-	double arrayB[maxRows][maxColumns]{};
-	int bRows, bCols;
-	double arrayC[maxRows][maxColumns]{};
-	int cRows, cCols;
+	double arrayA[maxRows][maxColumns] = { { 0 } };
+	int aRows = 0, aCols = 0;
+	double arrayB[maxRows][maxColumns] = { { 0 } };
+	int bRows = 0, bCols = 0;
+	double arrayC[maxRows][maxColumns] = { { 0}  };
+	int cRows = 0, cCols = 0;
 
 	//Переменные для пользовательского ввода.
-	int userChoice = 1;
-
+	int userChoice = -1;
 
 	// Служебные переменные
+	double solution;
 	double specialArray[maxRows][maxColumns];
 	int specRows, specCols;
+	bool is_specArr_filled = false;
 	bool is_ArrA_Filled = false;
 	bool is_ArrB_Filled = false;
 	bool is_ArrC_Filled = false;
 
 	while (userChoice != 0) { // Главный меню-цикл.
+		system("cls");
+		printMenu(arrayA, arrayB, arrayC, aRows, aCols, bRows, bCols, cRows, cCols, is_ArrA_Filled, is_ArrB_Filled, is_ArrC_Filled);
 		cin >> userChoice;
 		switch (userChoice) {
 		case 1:  // Заполнение 1ой матрицы
-			arrFillingHub(*arrayA, aRows, aCols, is_ArrA_Filled, userChoice);
+			arrFillingHub(arrayA, &aRows, &aCols, &is_ArrA_Filled, userChoice);
+			system("pause");
 			break;
 		case 2:  // Заполнение 2ой матрицы
-			arrFillingHub(*arrayB, bRows, bCols, is_ArrB_Filled, userChoice);
+			arrFillingHub(arrayB, &bRows, &bCols, &is_ArrB_Filled, userChoice);
+			system("pause");
 			break;
 		case 3:  // Заполнение 3ей матрицы
-			arrFillingHub(*arrayC, cRows, cCols, is_ArrC_Filled, userChoice);
+			arrFillingHub(arrayC, &cRows, &cCols, &is_ArrC_Filled, userChoice);
+			system("pause");
+			break;
+		case 4:
+			printSpecialArr(arrayA, arrayB, arrayC, aRows, aCols, bRows,
+				bCols, cRows, cCols, specialArray, &specRows, &specCols, is_ArrA_Filled, is_ArrB_Filled, is_ArrC_Filled);
+			system("pause");
+			break;
+		case 5:
+			solution = findSolution(arrayA, arrayB, arrayC, aRows,
+				aCols, bRows, bCols, cRows, cCols,
+				is_ArrA_Filled, is_ArrB_Filled, is_ArrC_Filled,
+				specialArray, &specRows, &specCols);
+			if (solution != -1) {
+				cout << "Выражение вида: (|A| + |B| + |C|)/|A + B + C|)\n"
+					"где |D| = max(первой строки) + max(второй строки) + ... + max(n-ой строки)\n"
+					" равно " << solution << "\n";
+			}
+			else {
+				cout << "Ошибка! Заполните все массивы.\n";
+			}
+			system("pause");
+			break;
+		case 0:
+			cout << "До свидания!\n";
+			userChoice = 0;
+			system("pause");
 			break;
 		default:
 			cout << "Я не понимаю вас, повторите ввод\n";
 			cin.clear();
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 			system("pause");
 			break;
 		}
@@ -54,30 +117,54 @@ int main() {
 }
 
 
-void arrFillingHub(double* arr, int& rows, int& columns, bool& filledSignal, int arrNumber) {
+void printMenu(double a1[][maxColumns],
+	double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, bool f1, bool f2, bool f3) {
+	cout << "Практическая работа #2 ИКБО-03-21 Мазанов А.Е. Вариант 17\n\n"
+		"Задание 1 - Статический массив\n"
+		"================Меню================\n";
+	if (f1 || f2 || f3) {
+		cout << "\n";
+		printArrays(a1, a2, a3, r1, c1, r2, c2, r3, c3, f1, f2, f3);
+		cout << "\n";
+	}
+	else {
+		cout << "\nМассивы пусты\n\n";
+	}
+	cout << "1) Заполнить матрицу 1 \n"
+		"2) Заполнить матрицу 2.\n"
+		"3) Заполнить матрицу 3.\n"
+		"4) Вывести сумму трёх матриц.\n"
+		"5) Рассчитать значение выражения (|A| + |B| + |C|)/|A + B + C)\n"
+		"где |D| = max(первой строки) + max(второй строки) + ... + max(n-ой строки)\n"
+		"0) Выход.\n"
+		"Ваш выбор: ";
+}
+
+
+void arrFillingHub(double arr[][maxColumns], int* rows, int* columns, bool* filledSignal, int arrNumber) {
 	int typeOfFilling;
 
-	cout << " === ЗАПОЛНЕНИЕ " << arrNumber << "ОЙ МАТРИЦЫ === "
+	cout << " === ЗАПОЛНЕНИЕ " << arrNumber << "ОЙ МАТРИЦЫ ===\n"
 		"Введите размер матрицы в формате MxN,"
 		"где M - кол - во строк, N - кол - во столбцов\n"
-		"(размер значений не должен превышать 1000";
+		"(размер значений не должен превышать 1000)\n";
 	cout << "Строк: ";
-	rows = correctInputSizes();
+	*rows = correctInputSizes();
 	cout << "Столбцов: ";
-	columns = correctInputSizes();
+	*columns = correctInputSizes();
 	cout << "Выберите тип заполнения:\n"
 		"Введите 1, чтобы заполнить массив случ. числами,\n"
 		"Введите 2, чтобы заполнить матрицу с клавиатуры.\n"
 		"Ваш выбор: ";
 	cin >> typeOfFilling;
 	if (typeOfFilling == 1 || typeOfFilling == 2) {
-		fillArray(arr, rows, columns, typeOfFilling);
-		filledSignal = true;
+		fillArray(arr, *rows, *columns, typeOfFilling);
+		*filledSignal = true;
 	}
 	else {
 		cout << "Ошибка! Допустимый ввод: 1 или 2.\n";
 	}
-	system("pause");
 }
 
 
@@ -93,85 +180,165 @@ int correctInputSizes() {
 }
 
 
-void fillArray(double* array, int rows, int columns, int generateType) {
+void fillArray(double array[][maxColumns], int rows, int columns, int generateType) {
 	if (generateType == 1) {
 		randomFilling(array, rows, columns);
 	}
 	else {
+		cout << "Введите " << rows * columns << " чисел: ";
 		keyboardFilling(array, rows, columns);
 	}
 }
 
 
-double getRandomNumber(int min, int max) {
-	srand(time(0));
-	return (double)(rand()) / RAND_MAX * (max - min) + min;
+double getRandomNumber() {
+	return (rand() / 100.0);
 }
 
 
-void randomFilling(double* array, int rows, int columns) {
+void randomFilling(double array[][maxColumns], int rows, int columns) {
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < columns; j++) {
-			array[i * rows + columns] = getRandomNumber(-1000, 1000);
+			array[i][j] = getRandomNumber();
 		}
 	}
 }
 
 
-void keyboardFilling(double* array, int rows, int columns) {
+void keyboardFilling(double array[][maxColumns], int rows, int columns) {
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < columns; j++) {
-			cin >> array[i * rows + columns];
+			cin >> array[i][j];
 		}
 	}
 }
 
 
-void printArrays(double* a1, double* a2, double* a3, int r1, int c1, int r2, int c2, int r3, int c3, bool f1, bool f2, bool f3) {
-	int maxR = max(r1, r2, r3);
-	int maxC = max(c1, c2, c3);
-	for (int i = 0; i < maxR + 1; i++) {
-		for (int j = 0; j <= 3 * maxC + 1; j++) {
-			if (i == 0 || i == maxR + 1) {
-				cout << "=";
+void printArrays(double a1[][maxColumns], double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, bool f1, bool f2, bool f3) {
+	int maxRows = max(r1, max(r2, r3));
+	int maxCols = max(c1, max(c2, c3));
+	for (int i = -1; i < maxRows + 1; i++) {
+		for (int j = 0; j <= 3 * maxCols + 1; j++) {
+			if (i == -1 || i == maxRows) {
+				cout << setw(7) << setfill('-') << "-";
 			}
 			else {
-				if (j < maxC) {
-					if (c1 < maxC && ) {
-						cout << a1[i * c1 + j] << " ";
+				cout << setfill(' ');
+				if (j < maxCols) {
+					if (j < c1 && f1 && i < r1) {
+						cout << setw(7) << a1[i][j] << " ";
 					}
 					else {
-						cout << "* ";
+						cout << setw(7) << "*" << " ";
 					}
 				}
-				if (j == maxC) {
-					cout << " ";
+				if (j == maxCols) {
+					cout << "|";
 				}
-				if (j > maxC && j <= 2 * maxC) {
-					if (j <= c2 && f1) {
-						cout << a2[i * c2 + j] << " ";
-					}
-					else {
-						cout << "* ";
-					}
-				}
-				if (j == 2 * maxC + 1) {
-					cout << " ";
-				}
-				if (j > 2 * maxC + 1) {
-					if (j <= 2 * maxC + c3 && f1) {
-						cout << a3[i * c3 + j] << " ";
+				if (j > maxCols && j <= 2 * maxCols) {
+					if (j - (maxCols + 1) <= c2 - 1 && f2 && i < r2) {
+						cout << setw(7) << a2[i][j - (maxCols + 1)] << " ";
 					}
 					else {
-						cout << "* ";
+						cout << setw(7) << "*" << " ";
+					}
+				}
+				if (j == 2 * maxCols + 1) {
+					cout << "|";
+				}
+				if (j > 2 * maxCols + 1) {
+					if (j - (2 * maxCols + 2) <= c3 - 1 && f3 && i < r3) {
+						cout << setw(7) << a3[i][j - (2 * maxCols + 2)] << " ";
+					}
+					else {
+						cout << setw(7) << "*" << " ";
 					}
 				}
 			}
 
 		}
+		cout << "\n";
 	}
+}
 
 
+double findMaxNumInArrRow(double array[][maxColumns], int columns, int rowNumber) {
+	int maxNumber = 0;
+	for (int i = 0; i < columns; i++){
+		if (maxNumber < array[rowNumber][i]) {
+			maxNumber = array[rowNumber][i];
+		}
+	}
+	return maxNumber;
+}
 
 
+double findD(double array[][maxColumns], int rows, int cols) {
+	int D = 0;
+	for (int i = 0; i < rows; i++){
+		D += findMaxNumInArrRow(array, cols, i);
+	}
+	return D;
+}
+
+
+void sumOfArrs(double a1[][maxColumns], double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, double sA[][maxColumns], int* rows, int* cols) {
+	for (int i = 0; i < *rows; i++) {
+		for (int j = 0; j < *cols; j++) {
+			sA[i][j] = 0;
+		}
+	}
+	*rows = max(r1, r2);
+	*cols = max(c1, c2);
+	for (int i = 0; i < *rows; i++){
+		for (int j = 0; j < *cols; j++){
+			sA[i][j] = a1[i][j] + a2[i][j];
+		}
+	}
+	*rows = max(*rows, r3);
+	*cols = max(*cols, c3);
+	for (int i = 0; i < *rows; i++) {
+		for (int j = 0; j < *cols; j++) {
+			sA[i][j] = sA[i][j] + a3[i][j];
+		}
+	}
+}
+
+
+double findSolution(double a1[][maxColumns], double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, bool f1, bool f2, bool f3, double sA[][maxColumns], int* rS, int* cS) {
+	double solution = -1;
+	if (f1 && f2 && f3) {
+		sumOfArrs(a1, a2, a3, r1, c1, r2, c2, r3, c3, sA, rS, cS);
+		double numerator = 0, denominator = 0;
+		numerator += findD(a1, r1, c1) + findD(a2, r2, c2) + findD(a3, r3, c3);
+		cout << numerator << "\n";
+		denominator = findD(sA, *rS, *cS);
+		cout << denominator << "\n";
+		solution = numerator / denominator;
+		return solution;
+	}
+	else {
+		return solution;
+	}
+}
+
+
+void printSpecialArr(double a1[][maxColumns], double a2[][maxColumns], double a3[][maxColumns],
+	int r1, int c1, int r2, int c2, int r3, int c3, double sA[][maxColumns], int* rS, int* cS, bool f1, bool f2, bool f3) {
+	if (f1 && f2 && f3) {
+		cout << "Сумма трёх массивов:\n";
+		sumOfArrs(a1, a2, a3, r1, c1, r2, c2, r3, c3, sA, rS, cS);
+		for (int i = 0; i < *rS; i++) {
+			for (int j = 0; j < *cS; j++) {
+				cout << setw(7) << setfill(' ') << sA[i][j] << " ";
+			}
+			cout << setfill(' ') << "\n";
+		}
+	}
+	else {
+		cout << "Невозможно найти сумму. Не все массивы заполнены.\n";
+	}
 }
